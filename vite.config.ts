@@ -3,6 +3,7 @@ import { defineConfig, loadEnv } from 'vite'
 import tsConfigPaths from 'vite-tsconfig-paths'
 import tailwindcss from '@tailwindcss/vite'
 import viteReact from '@vitejs/plugin-react'
+import { nitro } from 'nitro/vite'
 import type { Plugin } from 'vite'
 
 export default defineConfig(({ mode }) => {
@@ -144,6 +145,7 @@ export default defineConfig(({ mode }) => {
       }),
       apiProxyPlugin(), // Add our custom plugin before tanstackStart
       tanstackStart(),
+      nitro(),
       viteReact(),
     ],
   }
