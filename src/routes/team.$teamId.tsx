@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useMutation } from 'convex/react'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { convexQuery } from '@convex-dev/react-query'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { api } from '../../convex/_generated/api'
 import type { Id } from '../../convex/_generated/dataModel'
 import { Button } from '~/components/ui/button'
@@ -135,6 +135,10 @@ function TeamPage() {
     memberName: '',
   })
   const previousNotificationIds = useRef<Set<string>>(new Set())
+  const flashTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const isFlashingRef = useRef(false)
+  const flashStartTimeRef = useRef<number | null>(null)
+  const mainElementRef = useRef<HTMLElement | null>(null)
   const { requestPermission, showNotification } = useNotifications()
 
   // Predefined color palette (same as backend) - modern, contemporary colors
@@ -195,6 +199,16 @@ function TeamPage() {
     }
   }, [currentMemberId, isMember, requestPermission])
 
+  // Helper function to reset flash state and CSS variable
+  // Using useCallback to ensure it's stable for use in effects
+  const resetFlash = useCallback(() => {
+    console.log('Resetting flash state')
+    setShouldFlash(false)
+    isFlashingRef.current = false
+    flashStartTimeRef.current = null
+    document.documentElement.style.setProperty('--notification-flash', '0 0% 50%')
+  }, [])
+
   // Detect new notifications for current user and trigger flash
   useEffect(() => {
     if (!currentMemberId) {
@@ -222,16 +236,43 @@ function TeamPage() {
     )
 
     if (newNotifications.length > 0) {
-      console.log('New notification detected for current user:', newNotifications)
-      console.log('Triggering flash animation')
-      
-      // Mark these notifications as processed immediately so rapid successive notifications
-      // can each trigger their own flash
+      // Mark these notifications as processed
       const newNotificationIds = new Set(newNotifications.map((n) => n._id))
       previousNotificationIds.current = new Set([
         ...previousNotificationIds.current,
         ...newNotificationIds
       ])
+
+      // Prevent multiple simultaneous flashes - skip if one is already active
+      // But check if it's been stuck (active for more than 4 seconds) and force reset
+      if (isFlashingRef.current) {
+        const flashDuration = flashStartTimeRef.current 
+          ? Date.now() - flashStartTimeRef.current 
+          : Infinity
+        
+        if (flashDuration > 4000) {
+          // Flash has been stuck for more than 4 seconds, force reset
+          console.warn('Flash stuck for', flashDuration, 'ms, forcing reset')
+          if (flashTimerRef.current) {
+            clearTimeout(flashTimerRef.current)
+            flashTimerRef.current = null
+          }
+          resetFlash()
+          // Continue to trigger new flash below
+        } else {
+          console.log('Flash already active, skipping new flash to prevent blinking')
+          return
+        }
+      }
+
+      // Clear any existing timer before starting a new flash
+      if (flashTimerRef.current) {
+        clearTimeout(flashTimerRef.current)
+        flashTimerRef.current = null
+      }
+
+      console.log('New notification detected for current user:', newNotifications)
+      console.log('Triggering flash animation')
       
       // Get current user's color for the flash animation
       const currentMember = members.find((m) => m._id === currentMemberId)
@@ -241,15 +282,19 @@ function TeamPage() {
       // Set CSS variable with user's color
       document.documentElement.style.setProperty('--notification-flash', userColorHsl)
       
+      // Mark flash as active and record start time
+      isFlashingRef.current = true
+      flashStartTimeRef.current = Date.now()
+      
       // Trigger flash animation
       setShouldFlash(true)
-      // Reset after animation completes (3.5s)
-      const timer = setTimeout(() => {
-        console.log('Flash animation complete')
-        setShouldFlash(false)
-        // Reset CSS variable to default
-        document.documentElement.style.setProperty('--notification-flash', '0 0% 50%')
-      }, 3500)
+      
+      // Reset after animation completes (3.5s) with safety margin
+      flashTimerRef.current = setTimeout(() => {
+        console.log('Flash animation complete via timer')
+        resetFlash()
+        flashTimerRef.current = null
+      }, 4000) // Use 4s instead of 3.5s to ensure animation completes
 
       // Show OS notification with more prominent message
       if (team) {
@@ -259,13 +304,48 @@ function TeamPage() {
           tag: `turn-notification-${currentMemberId}`, // Unique tag for this user
         })
       }
-
-      return () => clearTimeout(timer)
     } else {
       // Update previous notification IDs even if no new notifications
       previousNotificationIds.current = currentNotificationIds
     }
-  }, [notifications, currentMemberId, team, showNotification])
+
+    // No cleanup function - let the timer complete naturally
+    // Clearing the timer here would prevent resetFlash from being called
+    // The safety check will catch any stuck flashes
+  }, [notifications, currentMemberId, team, showNotification, members])
+
+  // Safety mechanism: periodically check if flash is stuck and force reset
+  useEffect(() => {
+    const safetyCheckInterval = setInterval(() => {
+      if (isFlashingRef.current && flashStartTimeRef.current) {
+        const flashDuration = Date.now() - flashStartTimeRef.current
+        // If flash has been active for more than 5 seconds, force reset
+        if (flashDuration > 5000) {
+          console.warn('Flash stuck detected by safety check, forcing reset after', flashDuration, 'ms')
+          if (flashTimerRef.current) {
+            clearTimeout(flashTimerRef.current)
+            flashTimerRef.current = null
+          }
+          resetFlash()
+        }
+      }
+    }, 1000) // Check every second
+
+    return () => {
+      clearInterval(safetyCheckInterval)
+    }
+  }, [resetFlash])
+
+  // Cleanup on unmount: ensure timer is cleared and CSS variable is reset
+  useEffect(() => {
+    return () => {
+      if (flashTimerRef.current) {
+        clearTimeout(flashTimerRef.current)
+        flashTimerRef.current = null
+      }
+      resetFlash()
+    }
+  }, [])
 
   const handleQuickNotify = async (toMemberId: Id<'members'>) => {
     if (!currentMemberId) {
@@ -545,7 +625,10 @@ function TeamPage() {
   }
 
   return (
-    <main className={`h-screen flex flex-col p-4 sm:p-6 lg:p-8 relative overflow-hidden ${shouldFlash ? 'notification-flash' : ''}`}>
+    <main 
+      ref={mainElementRef}
+      className={`h-screen flex flex-col p-4 sm:p-6 lg:p-8 relative overflow-hidden ${shouldFlash ? 'notification-flash' : ''}`}
+    >
       {/* Background gradient overlay - matching landing page style */}
       <div className="fixed inset-0 bg-gradient-to-br from-background via-background to-background/95 pointer-events-none -z-10" />
       

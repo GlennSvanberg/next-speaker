@@ -1,5 +1,15 @@
 {
   "include": ["**/*.ts", "**/*.tsx", "public/script*.js"],
+  "exclude": [
+    "node_modules",
+    ".output",
+    ".vercel",
+    ".nitro",
+    ".tanstack",
+    "convex",
+    "dist",
+    "dist-ssr"
+  ],
   "compilerOptions": {
     "target": "ES2022",
     "jsx": "react-jsx",
