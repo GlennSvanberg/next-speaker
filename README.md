@@ -1,10 +1,10 @@
-# Next Speaker
+# Your turn
 
 A simple, no-authentication real-time notification app for team turn-taking. Think of it as a digital "tap on the shoulder" - quick, effective, and zero friction.
 
-## 🎯 What is Next Speaker?
+## 🎯 What is Your turn?
 
-Next Speaker is designed for teams who need a simple way to signal whose turn it is to speak. No logins, no accounts, no complexity. Just create a team, share the link, and start notifying each other.
+Your turn is designed for teams who need a simple way to signal whose turn it is to speak. No logins, no accounts, no complexity. Just create a team, share the link, and start notifying each other.
 
 ### Key Design Decisions
 

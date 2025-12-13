@@ -116,6 +116,14 @@ export const getTeam = query({
   },
 })
 
+// Get all teams (for admin mode)
+export const getAllTeams = query({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.db.query('teams').order('desc').collect()
+  },
+})
+
 // Get all members of a team
 export const getMembers = query({
   args: {

@@ -6,7 +6,6 @@ import { useState, useEffect, useRef } from 'react'
 import { api } from '../../convex/_generated/api'
 import type { Id } from '../../convex/_generated/dataModel'
 import { Button } from '~/components/ui/button'
-import { Switch } from '~/components/ui/switch'
 import { Card, CardContent } from '~/components/ui/card'
 import { Input } from '~/components/ui/input'
 import { Badge } from '~/components/ui/badge'
@@ -18,7 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '~/components/ui/dialog'
-import { Copy, Edit, Trash2, Pencil, Check, ArrowLeft } from 'lucide-react'
+import { Copy, Edit, Trash2, Pencil, Check, ArrowLeft, HelpCircle, Hand, Users, Menu } from 'lucide-react'
 import { useNotifications } from '~/lib/useNotifications'
 
 export const Route = createFileRoute('/team/$teamId')({
@@ -33,6 +32,16 @@ function addTeamToUserTeams(teamId: string) {
     teams.push(teamId)
     localStorage.setItem('userTeams', JSON.stringify(teams))
   }
+}
+
+// Darken a hex color by reducing lightness
+function darkenColor(hex: string, amount: number = 0.3): string {
+  hex = hex.replace('#', '')
+  const r = parseInt(hex.substring(0, 2), 16)
+  const g = parseInt(hex.substring(2, 4), 16)
+  const b = parseInt(hex.substring(4, 6), 16)
+  
+  return `#${Math.round(r * (1 - amount)).toString(16).padStart(2, '0')}${Math.round(g * (1 - amount)).toString(16).padStart(2, '0')}${Math.round(b * (1 - amount)).toString(16).padStart(2, '0')}`
 }
 
 // Convert hex color to HSL format for CSS variables
@@ -114,6 +123,9 @@ function TeamPage() {
   const [joinMemberColor, setJoinMemberColor] = useState<string | null>(null)
   const [isJoining, setIsJoining] = useState(false)
   const [isLinkCopied, setIsLinkCopied] = useState(false)
+  const [showHelpDialog, setShowHelpDialog] = useState(false)
+  const [showMobileMenu, setShowMobileMenu] = useState(false)
+  const [notifiedMembers, setNotifiedMembers] = useState<Set<Id<'members'>>>(new Set())
   const previousNotificationIds = useRef<Set<string>>(new Set())
   const { requestPermission, showNotification } = useNotifications()
 
@@ -223,17 +235,21 @@ function TeamPage() {
       
       // Trigger flash animation
       setShouldFlash(true)
-      // Reset after animation completes (2s)
+      // Reset after animation completes (3.5s)
       const timer = setTimeout(() => {
         console.log('Flash animation complete')
         setShouldFlash(false)
         // Reset CSS variable to default
         document.documentElement.style.setProperty('--notification-flash', '0 0% 50%')
-      }, 2000)
+      }, 3500)
 
-      // Show OS notification
+      // Show OS notification with more prominent message
       if (team) {
-        showNotification(`${team.name} needs you`)
+        showNotification(`🎯 IT'S YOUR TURN!`, {
+          body: `${team.name} needs you right now!`,
+          requireInteraction: true, // Keep notification visible until user interacts
+          tag: `turn-notification-${currentMemberId}`, // Unique tag for this user
+        })
       }
 
       return () => clearTimeout(timer)
@@ -249,10 +265,6 @@ function TeamPage() {
       return
     }
 
-    // Find the member name for the toast
-    const targetMember = members.find((m) => m._id === toMemberId)
-    const memberName = targetMember?.name || 'member'
-
     try {
       await sendNotification({
         teamId: teamId as Id<'teams'>,
@@ -260,11 +272,17 @@ function TeamPage() {
         toMemberId,
         message: undefined,
       })
-      // Show success toast
-      setToastMessage(`Sent alert to ${memberName}`)
-      // Hide toast after 3 seconds
+      
+      // Show notification indicator on the recipient's card
+      setNotifiedMembers((prev) => new Set(prev).add(toMemberId))
+      
+      // Remove the indicator after animation completes (3 seconds)
       setTimeout(() => {
-        setToastMessage(null)
+        setNotifiedMembers((prev) => {
+          const newSet = new Set(prev)
+          newSet.delete(toMemberId)
+          return newSet
+        })
       }, 3000)
     } catch (err) {
       console.error('Failed to send notification:', err)
@@ -281,8 +299,10 @@ function TeamPage() {
     const url = `${window.location.origin}/team/${teamId}`
     navigator.clipboard.writeText(url)
     setIsLinkCopied(true)
+    setToastMessage('Link copied to clipboard!')
     setTimeout(() => {
       setIsLinkCopied(false)
+      setToastMessage(null)
     }, 2000)
   }
 
@@ -484,54 +504,132 @@ function TeamPage() {
   }
 
   return (
-    <main className={`h-screen flex flex-col p-8 max-w-6xl mx-auto ${shouldFlash ? 'notification-flash' : ''}`}>
+    <main className={`h-screen flex flex-col p-4 sm:p-6 lg:p-8 relative overflow-hidden ${shouldFlash ? 'notification-flash' : ''}`}>
+      {/* Background gradient overlay */}
+      <div className="fixed inset-0 bg-gradient-to-br from-background via-background to-muted/10 pointer-events-none -z-10" />
+      
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[10000] transition-opacity duration-300">
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[10000] transition-opacity duration-300 max-w-[calc(100vw-2rem)]">
           <div 
-            className="rounded-lg border border-border bg-background shadow-lg"
-            style={{ backgroundColor: 'hsl(var(--background))' }}
+            className="rounded-xl border border-border/50 bg-background/95 backdrop-blur-sm shadow-2xl"
+            style={{ backgroundColor: 'hsl(var(--background) / 0.95)' }}
           >
-            <div className="pt-4 pb-4 px-4">
-              <p className="text-sm font-medium text-foreground">{toastMessage}</p>
+            <div className="pt-4 pb-4 px-5">
+              <p className="text-sm font-semibold text-foreground">{toastMessage}</p>
             </div>
           </div>
         </div>
       )}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between flex-shrink-0 mb-6 gap-4">
-        <div className="flex items-center gap-3 min-w-0 flex-shrink">
-          <Button variant="ghost" size="sm" onClick={() => window.history.back()}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <h1 className="text-3xl font-bold break-words">{team.name}</h1>
-        </div>
-        <div className="flex items-center gap-2 flex-shrink-0 self-end sm:self-auto">
-          <Button variant="outline" size="sm" onClick={copyTeamLink}>
-            {isLinkCopied ? (
+      
+      {/* Header */}
+      <div className="flex-shrink-0 mb-4 sm:mb-6">
+        <div className="flex items-center justify-between gap-2 sm:gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => window.history.back()}
+              className="min-h-[44px] min-w-[44px] hover:bg-muted/50 rounded-lg transition-all flex-shrink-0"
+              aria-label="Go back"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold break-words">
+              {team.name}
+            </h1>
+          </div>
+          
+          {/* Hamburger menu - always visible */}
+          <div className="relative flex-shrink-0">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowMobileMenu(!showMobileMenu)}
+              className="min-h-[44px] min-w-[44px] hover:bg-muted/50 transition-all rounded-lg"
+              aria-label="Open menu"
+              aria-expanded={showMobileMenu}
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
+            
+            {/* Menu dropdown */}
+            {showMobileMenu && (
               <>
-                <Check className="mr-2 h-4 w-4" />
-                Copied!
-              </>
-            ) : (
-              <>
-                <Copy className="mr-2 h-4 w-4" />
-                Copy Invite Link
+                {/* Backdrop */}
+                <div 
+                  className="fixed inset-0 z-40" 
+                  onClick={() => setShowMobileMenu(false)}
+                  aria-hidden="true"
+                />
+                {/* Menu */}
+                <div 
+                  className="absolute right-0 top-full mt-2 w-56 z-50 rounded-lg border border-border/50 bg-card shadow-2xl"
+                  style={{ 
+                    backgroundColor: 'hsl(var(--card))',
+                  }}
+                >
+                  <div className="p-2 space-y-1">
+                    <button
+                      onClick={() => {
+                        copyTeamLink()
+                        // Keep menu open briefly to show feedback, then close after delay
+                        setTimeout(() => {
+                          setShowMobileMenu(false)
+                        }, 1500)
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-md hover:bg-muted/50 transition-colors text-left"
+                    >
+                      {isLinkCopied ? (
+                        <>
+                          <Check className="h-4 w-4" />
+                          Copied!
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="h-4 w-4" />
+                          Copy Link
+                        </>
+                      )}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowHelpDialog(true)
+                        setShowMobileMenu(false)
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-md hover:bg-muted/50 transition-colors text-left"
+                    >
+                      <HelpCircle className="h-4 w-4" />
+                      Help
+                    </button>
+                    <button
+                      onClick={() => {
+                        setIsEditMode(!isEditMode)
+                        setShowMobileMenu(false)
+                      }}
+                      className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-md hover:bg-muted/50 transition-colors text-left ${
+                        isEditMode ? 'bg-primary/10' : ''
+                      }`}
+                    >
+                      <Edit className="h-4 w-4" />
+                      {isEditMode ? 'Exit Edit Mode' : 'Edit Mode'}
+                    </button>
+                  </div>
+                </div>
               </>
             )}
-          </Button>
-          <Switch
-            checked={isEditMode}
-            onCheckedChange={setIsEditMode}
-            aria-label="Toggle edit mode"
-          >
-            <Edit className="h-4 w-4" />
-          </Switch>
+          </div>
         </div>
       </div>
 
-      <Card className="border-0 shadow-none flex-1 min-h-0 flex flex-col">
-        <CardContent className="flex-1 min-h-0 p-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 h-full auto-rows-fr">
+      <Card className="border-0 shadow-none flex-1 min-h-0 flex flex-col bg-transparent">
+        <CardContent className="flex-1 min-h-0 p-3 sm:p-4 lg:p-6">
+          <div 
+            className="grid gap-4 sm:gap-5 lg:gap-6 h-full auto-rows-fr w-full"
+            style={{
+              gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 250px), 1fr))'
+            }}
+          >
             {members.map((member) => {
               const memberColor = getMemberColor(member)
               const hasCustomColor = !!member.color
@@ -539,85 +637,148 @@ function TeamPage() {
               return (
                 <Card
                   key={member._id}
-                  className={`transition-all overflow-hidden h-full flex flex-col border-0 ${
-                    isEditMode ? '' : 'cursor-pointer'
+                  className={`transition-all duration-300 overflow-hidden h-full flex flex-col border-0 min-h-[140px] sm:min-h-[180px] lg:min-h-[200px] rounded-xl ${
+                    isEditMode ? '' : 'cursor-pointer active:scale-[0.97] hover:scale-[1.02]'
                   } ${
                     hasCustomColor
-                      ? 'shadow-lg hover:shadow-xl'
-                      : 'hover:shadow-md'
+                      ? 'shadow-2xl hover:shadow-[0_0_40px_rgba(0,0,0,0.4)] active:shadow-xl'
+                      : 'shadow-lg hover:shadow-xl active:shadow-lg'
                   }`}
                   style={{
                     boxShadow: hasCustomColor
-                      ? `0 0 30px ${memberColor}60, 0 10px 20px -5px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)`
-                      : undefined,
+                      ? `0 0 40px ${memberColor}80, 0 15px 30px -10px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2)`
+                      : `0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.05)`,
                   }}
                   onClick={() => !isEditMode && handleQuickNotify(member._id)}
+                  onKeyDown={(e) => {
+                    if (!isEditMode && (e.key === 'Enter' || e.key === ' ')) {
+                      e.preventDefault()
+                      handleQuickNotify(member._id)
+                    }
+                  }}
+                  role={isEditMode ? undefined : 'button'}
+                  tabIndex={isEditMode ? undefined : 0}
+                  aria-label={isEditMode ? undefined : `Notify ${member.name}`}
+                  title={isEditMode ? undefined : `Click to notify ${member.name}`}
                 >
                   <CardContent 
-                    className="pt-6 pb-6 px-6 flex-1 flex flex-col justify-center relative"
+                    className="pt-6 pb-6 px-6 flex-1 flex flex-col justify-center relative group/card"
                     style={{
                       background: `
-                        radial-gradient(ellipse at top left, rgba(255, 255, 255, 0.15) 0%, transparent 50%),
-                        radial-gradient(ellipse at bottom right, rgba(0, 0, 0, 0.2) 0%, transparent 50%),
-                        linear-gradient(135deg, ${memberColor} 0%, ${memberColor}DD 50%, ${memberColor}BB 100%)
+                        radial-gradient(ellipse at top left, rgba(255, 255, 255, 0.2) 0%, transparent 60%),
+                        radial-gradient(ellipse at bottom right, rgba(0, 0, 0, 0.25) 0%, transparent 60%),
+                        linear-gradient(135deg, ${memberColor} 0%, ${memberColor}E6 40%, ${memberColor}CC 100%)
                       `,
                     }}
                   >
-                    {/* Subtle diagonal pattern overlay */}
+                    {/* Enhanced diagonal pattern overlay */}
                     <div 
-                      className="absolute inset-0 opacity-[0.08]"
+                      className="absolute inset-0 opacity-[0.06] group-hover/card:opacity-[0.1] transition-opacity"
                       style={{
                         backgroundImage: `repeating-linear-gradient(
                           45deg,
                           transparent,
-                          transparent 2px,
-                          rgba(0, 0, 0, 0.3) 2px,
-                          rgba(0, 0, 0, 0.3) 4px
+                          transparent 3px,
+                          rgba(0, 0, 0, 0.4) 3px,
+                          rgba(0, 0, 0, 0.4) 6px
                         )`,
                       }}
                     />
-                    {/* Inner shadow for depth */}
+                    {/* Enhanced inner shadow for depth */}
                     <div 
-                      className="absolute inset-0 pointer-events-none rounded-lg"
+                      className="absolute inset-0 pointer-events-none rounded-xl"
                       style={{
                         boxShadow: `
-                          inset 0 2px 10px rgba(0, 0, 0, 0.25),
-                          inset 0 -2px 10px rgba(255, 255, 255, 0.15),
-                          inset 0 0 20px rgba(0, 0, 0, 0.1)
+                          inset 0 3px 15px rgba(0, 0, 0, 0.3),
+                          inset 0 -3px 15px rgba(255, 255, 255, 0.2),
+                          inset 0 0 30px rgba(0, 0, 0, 0.15)
                         `,
                       }}
                     />
-                    <div className="flex flex-col items-center justify-center space-y-2 relative h-full z-10">
+                    {/* Glow effect on hover */}
+                    {!isEditMode && (
+                      <div 
+                        className="absolute inset-0 pointer-events-none rounded-xl opacity-0 group-hover/card:opacity-100 transition-opacity duration-300"
+                        style={{
+                          boxShadow: `inset 0 0 60px ${memberColor}40`,
+                        }}
+                      />
+                    )}
+                    {/* Notification indicator */}
+                    {notifiedMembers.has(member._id) && (
+                      <div className="absolute inset-0 pointer-events-none rounded-xl z-20">
+                        {/* Full card highlight overlay */}
+                        <div 
+                          className="absolute inset-0 rounded-xl animate-notification-pulse-ring"
+                          style={{
+                            backgroundColor: `${memberColor}40`,
+                            boxShadow: `0 0 0 6px ${memberColor}, 0 0 0 12px ${memberColor}CC, 0 0 40px ${memberColor}AA, 0 0 80px ${memberColor}80, inset 0 0 120px ${memberColor}50`,
+                          }}
+                        />
+                        {/* Large checkmark */}
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          {(() => {
+                            const darkColor = darkenColor(memberColor, 0.4)
+                            return (
+                              <div 
+                                className="rounded-full p-6 backdrop-blur-md border-4 animate-bounce-in"
+                                style={{
+                                  backgroundColor: `${darkColor}50`,
+                                  borderColor: memberColor,
+                                  boxShadow: `0 0 0 4px ${darkColor}, 0 0 30px ${memberColor}80, 0 0 60px ${memberColor}60`,
+                                }}
+                              >
+                                <Check 
+                                  className="h-16 w-16 sm:h-20 sm:w-20" 
+                                  style={{ color: memberColor }}
+                                  strokeWidth={4}
+                                />
+                              </div>
+                            )
+                          })()}
+                        </div>
+                      </div>
+                    )}
+                    <div className="flex flex-col items-center justify-center space-y-3 relative h-full z-10">
                       {isEditMode && (
-                        <div className="flex gap-2 w-full justify-end absolute top-0 right-0">
+                        <div className="flex gap-2 w-full justify-end absolute top-2 right-2 z-20">
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8"
+                            className="h-10 w-10 min-h-[44px] min-w-[44px] bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white border border-white/30 shadow-lg"
                             onClick={(e) => {
                               e.stopPropagation()
                               openRenameDialog(member._id)
                             }}
+                            aria-label={`Edit ${member.name}`}
+                            title={`Edit ${member.name}`}
                           >
                             <Pencil className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 text-destructive hover:text-destructive"
+                            className="h-10 w-10 min-h-[44px] min-w-[44px] bg-red-500/20 backdrop-blur-sm hover:bg-red-500/30 text-white border border-red-300/30 shadow-lg"
                             onClick={(e) => {
                               e.stopPropagation()
                               handleDeleteMember(member._id)
                             }}
+                            aria-label={`Delete ${member.name}`}
+                            title={`Delete ${member.name}`}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
                       )}
                       <div className="flex flex-col items-center">
-                        <p className="font-semibold text-lg text-center">{member.name}</p>
+                        <p className="font-bold text-xl sm:text-2xl lg:text-3xl text-center break-words px-2 text-white drop-shadow-lg">
+                          {member.name}
+                        </p>
                         {member._id === currentMemberId && (
-                          <Badge variant="secondary" className="mt-1">
+                          <Badge 
+                            variant="secondary" 
+                            className="mt-3 text-xs font-bold px-3 py-1 bg-white/20 backdrop-blur-sm border-white/30 text-white shadow-lg"
+                          >
                             You
                           </Badge>
                         )}
@@ -630,6 +791,59 @@ function TeamPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Help Dialog */}
+      <Dialog open={showHelpDialog} onOpenChange={setShowHelpDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>How to use Your turn</DialogTitle>
+            <DialogDescription>
+              Quick guide to using the app
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <h4 className="font-semibold text-sm flex items-center gap-2">
+                <Hand className="h-4 w-4" />
+                Sending notifications
+              </h4>
+              <p className="text-sm text-muted-foreground">
+                Click on any team member's card to instantly send them a notification. They'll see a visual flash and receive a browser notification.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <h4 className="font-semibold text-sm flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                Your card
+              </h4>
+              <p className="text-sm text-muted-foreground">
+                Your card is marked with a "You" badge. You can still notify yourself if needed.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <h4 className="font-semibold text-sm flex items-center gap-2">
+                <Copy className="h-4 w-4" />
+                Sharing the team
+              </h4>
+              <p className="text-sm text-muted-foreground">
+                Use the "Copy Invite Link" button to share the team link with others. They can join instantly without creating an account.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <h4 className="font-semibold text-sm flex items-center gap-2">
+                <Edit className="h-4 w-4" />
+                Edit mode
+              </h4>
+              <p className="text-sm text-muted-foreground">
+                Toggle edit mode to rename members or change their colors. In edit mode, clicking cards won't send notifications.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setShowHelpDialog(false)}>Got it</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Edit Member Dialog */}
       <Dialog open={isRenameDialogOpen} onOpenChange={setIsRenameDialogOpen}>
