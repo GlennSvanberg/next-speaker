@@ -29,7 +29,7 @@ export const Route = createRootRouteWithContext<{
       },
       {
         name: 'theme-color',
-        content: '#ffffff',
+        content: '#0a0e1a',
       },
       {
         name: 'mobile-web-app-capable',

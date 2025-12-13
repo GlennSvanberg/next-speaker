@@ -17,7 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '~/components/ui/dialog'
-import { Copy, Edit, Trash2, Pencil, Check, ArrowLeft, HelpCircle, Hand, Users, Menu, Share2 } from 'lucide-react'
+import { Trash2, Pencil, Check, ArrowLeft, HelpCircle, Users, Share2, Bell, Zap, Palette } from 'lucide-react'
 import { useNotifications } from '~/lib/useNotifications'
 import { PWAInstallPrompt } from '~/components/PWAInstallPrompt'
 
@@ -113,7 +113,6 @@ function TeamPage() {
   const [currentMemberId, setCurrentMemberId] = useState<Id<'members'> | null>(null)
   const [shouldFlash, setShouldFlash] = useState(false)
   const [toastMessage, setToastMessage] = useState<string | null>(null)
-  const [isEditMode, setIsEditMode] = useState(false)
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false)
   const [editingMemberId, setEditingMemberId] = useState<Id<'members'> | null>(null)
   const [editingMemberName, setEditingMemberName] = useState('')
@@ -123,11 +122,18 @@ function TeamPage() {
   const [joinMemberName, setJoinMemberName] = useState('')
   const [joinMemberColor, setJoinMemberColor] = useState<string | null>(null)
   const [isJoining, setIsJoining] = useState(false)
-  const [isLinkCopied, setIsLinkCopied] = useState(false)
   const [copiedPingUrlMemberId, setCopiedPingUrlMemberId] = useState<Id<'members'> | null>(null)
   const [showHelpDialog, setShowHelpDialog] = useState(false)
-  const [showMobileMenu, setShowMobileMenu] = useState(false)
   const [notifiedMembers, setNotifiedMembers] = useState<Set<Id<'members'>>>(new Set())
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean
+    memberId: Id<'members'> | null
+    memberName: string
+  }>({
+    open: false,
+    memberId: null,
+    memberName: '',
+  })
   const previousNotificationIds = useRef<Set<string>>(new Set())
   const { requestPermission, showNotification } = useNotifications()
 
@@ -297,16 +303,6 @@ function TeamPage() {
   }
 
 
-  const copyTeamLink = () => {
-    const url = `${window.location.origin}/team/${teamId}`
-    navigator.clipboard.writeText(url)
-    setIsLinkCopied(true)
-    setToastMessage('Link copied to clipboard!')
-    setTimeout(() => {
-      setIsLinkCopied(false)
-      setToastMessage(null)
-    }, 2000)
-  }
 
   const copyPingUrl = (toMemberId: Id<'members'>) => {
     if (!currentMemberId) {
@@ -380,6 +376,19 @@ function TeamPage() {
     const member = members.find((m) => m._id === memberId)
     const memberName = member?.name || 'member'
 
+    setConfirmDialog({
+      open: true,
+      memberId,
+      memberName,
+    })
+  }
+
+  const confirmDeleteMember = async () => {
+    if (!confirmDialog.memberId) return
+
+    const memberId = confirmDialog.memberId
+    const memberName = confirmDialog.memberName
+
     try {
       await deleteMember({ memberId })
       
@@ -393,12 +402,14 @@ function TeamPage() {
       setTimeout(() => {
         setToastMessage(null)
       }, 3000)
+      setConfirmDialog({ open: false, memberId: null, memberName: '' })
     } catch (err) {
       console.error('Failed to delete member:', err)
       setToastMessage(err instanceof Error ? err.message : 'Failed to delete member')
       setTimeout(() => {
         setToastMessage(null)
       }, 3000)
+      setConfirmDialog({ open: false, memberId: null, memberName: '' })
     }
   }
 
@@ -571,105 +582,23 @@ function TeamPage() {
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold break-words text-foreground flex items-center gap-2 sm:gap-3">
-                <span>{team.name}</span>
-                {/* Share icon styled to match title */}
-                <button
-                  onClick={() => {
-                    copyTeamLink()
-                  }}
-                  className="inline-flex items-center justify-center hover:opacity-70 transition-opacity flex-shrink-0 cursor-pointer"
-                  aria-label="Share team link"
-                  title="Share team link"
-                >
-                  {isLinkCopied ? (
-                    <Check className="h-[1em] w-[1em] text-foreground" strokeWidth={2.5} />
-                  ) : (
-                    <Share2 className="h-[1em] w-[1em] text-foreground hover:scale-110 transition-transform" strokeWidth={2.5} />
-                  )}
-                </button>
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold break-words text-foreground">
+                {team.name}
               </h1>
             </div>
           </div>
           
-          {/* Hamburger menu - always visible */}
+          {/* Help button */}
           <div className="relative flex-shrink-0">
             <Button
-              variant="outline"
+              variant="ghost"
               size="sm"
-              onClick={() => setShowMobileMenu(!showMobileMenu)}
-              className="min-h-[44px] min-w-[44px] hover:bg-muted/50 transition-all rounded-lg"
-              aria-label="Open menu"
-              aria-expanded={showMobileMenu}
+              onClick={() => setShowHelpDialog(true)}
+              className="min-h-[44px] min-w-[44px] hover:bg-muted/50 transition-all rounded-full border-0 p-0"
+              aria-label="Help"
             >
-              <Menu className="h-5 w-5" />
+              <HelpCircle className="h-5 w-5" />
             </Button>
-            
-            {/* Menu dropdown */}
-            {showMobileMenu && (
-              <>
-                {/* Backdrop */}
-                <div 
-                  className="fixed inset-0 z-40" 
-                  onClick={() => setShowMobileMenu(false)}
-                  aria-hidden="true"
-                />
-                {/* Menu */}
-                <div 
-                  className="absolute right-0 top-full mt-2 w-56 z-50 rounded-lg border border-border/50 bg-card shadow-2xl"
-                  style={{ 
-                    backgroundColor: 'hsl(var(--card))',
-                  }}
-                >
-                  <div className="p-2 space-y-1">
-                    <button
-                      onClick={() => {
-                        copyTeamLink()
-                        // Keep menu open briefly to show feedback, then close after delay
-                        setTimeout(() => {
-                          setShowMobileMenu(false)
-                        }, 1500)
-                      }}
-                      className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-md hover:bg-muted/50 transition-colors text-left"
-                    >
-                      {isLinkCopied ? (
-                        <>
-                          <Check className="h-4 w-4" />
-                          Copied!
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="h-4 w-4" />
-                          Copy Link
-                        </>
-                      )}
-                    </button>
-                    <button
-                      onClick={() => {
-                        setShowHelpDialog(true)
-                        setShowMobileMenu(false)
-                      }}
-                      className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-md hover:bg-muted/50 transition-colors text-left"
-                    >
-                      <HelpCircle className="h-4 w-4" />
-                      Help
-                    </button>
-                    <button
-                      onClick={() => {
-                        setIsEditMode(!isEditMode)
-                        setShowMobileMenu(false)
-                      }}
-                      className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-md hover:bg-muted/50 transition-colors text-left ${
-                        isEditMode ? 'bg-primary/10' : ''
-                      }`}
-                    >
-                      <Edit className="h-4 w-4" />
-                      {isEditMode ? 'Exit Edit Mode' : 'Edit Mode'}
-                    </button>
-                  </div>
-                </div>
-              </>
-            )}
           </div>
         </div>
       </div>
@@ -689,9 +618,7 @@ function TeamPage() {
               return (
                 <Card
                   key={member._id}
-                  className={`transition-all duration-300 overflow-hidden h-full flex flex-col border-0 min-h-[140px] sm:min-h-[180px] lg:min-h-[200px] rounded-xl ${
-                    isEditMode ? '' : 'cursor-pointer active:scale-[0.97] hover:scale-[1.02]'
-                  } ${
+                  className={`transition-all duration-300 overflow-hidden h-full flex flex-col border-0 min-h-[140px] sm:min-h-[180px] lg:min-h-[200px] rounded-xl cursor-pointer active:scale-[0.97] hover:scale-[1.02] ${
                     hasCustomColor
                       ? 'shadow-2xl hover:shadow-[0_0_40px_rgba(0,0,0,0.4)] active:shadow-xl'
                       : 'shadow-lg hover:shadow-xl active:shadow-lg'
@@ -701,17 +628,17 @@ function TeamPage() {
                       ? `0 0 40px ${memberColor}80, 0 15px 30px -10px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2)`
                       : `0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.05)`,
                   }}
-                  onClick={() => !isEditMode && handleQuickNotify(member._id)}
+                  onClick={() => handleQuickNotify(member._id)}
                   onKeyDown={(e) => {
-                    if (!isEditMode && (e.key === 'Enter' || e.key === ' ')) {
+                    if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault()
                       handleQuickNotify(member._id)
                     }
                   }}
-                  role={isEditMode ? undefined : 'button'}
-                  tabIndex={isEditMode ? undefined : 0}
-                  aria-label={isEditMode ? undefined : `Notify ${member.name}`}
-                  title={isEditMode ? undefined : `Click to notify ${member.name}`}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Notify ${member.name}`}
+                  title={`Click to notify ${member.name}`}
                 >
                   <CardContent 
                     className="pt-6 pb-6 px-6 flex-1 flex flex-col justify-center relative group/card"
@@ -748,14 +675,12 @@ function TeamPage() {
                       }}
                     />
                     {/* Glow effect on hover */}
-                    {!isEditMode && (
-                      <div 
-                        className="absolute inset-0 pointer-events-none rounded-xl opacity-0 group-hover/card:opacity-100 transition-opacity duration-300"
-                        style={{
-                          boxShadow: `inset 0 0 60px ${memberColor}40`,
-                        }}
-                      />
-                    )}
+                    <div 
+                      className="absolute inset-0 pointer-events-none rounded-xl opacity-0 group-hover/card:opacity-100 transition-opacity duration-300"
+                      style={{
+                        boxShadow: `inset 0 0 60px ${memberColor}40`,
+                      }}
+                    />
                     {/* Notification indicator */}
                     {notifiedMembers.has(member._id) && (
                       <div className="absolute inset-0 pointer-events-none rounded-xl z-20">
@@ -792,53 +717,52 @@ function TeamPage() {
                       </div>
                     )}
                     <div className="flex flex-col items-center justify-center space-y-3 relative h-full z-10">
-                      {isEditMode && (
-                        <div className="flex gap-2 w-full justify-end absolute top-2 right-2 z-20">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-10 w-10 min-h-[44px] min-w-[44px] bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white border border-white/30 shadow-lg"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              copyPingUrl(member._id)
-                            }}
-                            aria-label={`Copy ping URL for ${member.name}`}
-                            title={`Copy ping URL for ${member.name}`}
-                          >
-                            {copiedPingUrlMemberId === member._id ? (
-                              <Check className="h-4 w-4" />
-                            ) : (
-                              <Share2 className="h-4 w-4" />
-                            )}
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-10 w-10 min-h-[44px] min-w-[44px] bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white border border-white/30 shadow-lg"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              openRenameDialog(member._id)
-                            }}
-                            aria-label={`Edit ${member.name}`}
-                            title={`Edit ${member.name}`}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-10 w-10 min-h-[44px] min-w-[44px] bg-red-500/20 backdrop-blur-sm hover:bg-red-500/30 text-white border border-red-300/30 shadow-lg"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleDeleteMember(member._id)
-                            }}
-                            aria-label={`Delete ${member.name}`}
-                            title={`Delete ${member.name}`}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      )}
+                      {/* Edit buttons - always visible */}
+                      <div className="flex gap-2 w-full justify-end absolute top-2 right-2 z-20">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-10 w-10 min-h-[44px] min-w-[44px] bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white border border-white/30 shadow-lg"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            copyPingUrl(member._id)
+                          }}
+                          aria-label={`Copy ping URL for ${member.name}`}
+                          title={`Copy ping URL for ${member.name}`}
+                        >
+                          {copiedPingUrlMemberId === member._id ? (
+                            <Check className="h-4 w-4" />
+                          ) : (
+                            <Share2 className="h-4 w-4" />
+                          )}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-10 w-10 min-h-[44px] min-w-[44px] bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white border border-white/30 shadow-lg"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            openRenameDialog(member._id)
+                          }}
+                          aria-label={`Edit ${member.name}`}
+                          title={`Edit ${member.name}`}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-10 w-10 min-h-[44px] min-w-[44px] bg-red-500/20 backdrop-blur-sm hover:bg-red-500/30 text-white border border-red-300/30 shadow-lg"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleDeleteMember(member._id)
+                          }}
+                          aria-label={`Delete ${member.name}`}
+                          title={`Delete ${member.name}`}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                       <div className="flex flex-col items-center">
                         <p className="font-bold text-xl sm:text-2xl lg:text-3xl text-center break-words px-2 text-white drop-shadow-lg">
                           {member.name}
@@ -861,51 +785,112 @@ function TeamPage() {
         </CardContent>
       </Card>
 
+      {/* Confirmation Dialog */}
+      <Dialog open={confirmDialog.open} onOpenChange={(open) => setConfirmDialog({ ...confirmDialog, open })}>
+        <DialogContent className="sm:max-w-md border-2" style={{ backgroundColor: 'hsl(var(--background))' }}>
+          <DialogHeader>
+            <DialogTitle className="text-xl">Delete Member</DialogTitle>
+            <DialogDescription className="pt-2 text-base">
+              Are you sure you want to delete member "{confirmDialog.memberName}"?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-3 sm:gap-3 pt-4">
+            <Button
+              variant="outline"
+              onClick={() => setConfirmDialog({ open: false, memberId: null, memberName: '' })}
+              className="min-h-[40px]"
+            >
+              No
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDeleteMember}
+              className="min-h-[40px]"
+            >
+              Yes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Help Dialog */}
       <Dialog open={showHelpDialog} onOpenChange={setShowHelpDialog}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-lg border-2" style={{ backgroundColor: 'hsl(var(--background))' }}>
           <DialogHeader>
-            <DialogTitle>How to use Ping</DialogTitle>
-            <DialogDescription>
-              Quick guide to using the app
+            <DialogTitle className="text-xl flex items-center gap-2">
+              <HelpCircle className="h-5 w-5 text-primary" />
+              How to use Ping
+            </DialogTitle>
+            <DialogDescription className="pt-2">
+              Quick guide to using the team page
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <h4 className="font-semibold text-sm flex items-center gap-2">
-                <Hand className="h-4 w-4" />
-                Sending notifications
-              </h4>
-              <p className="text-sm text-muted-foreground">
-                Click on any team member's card to instantly send them a notification. They'll see a visual flash and receive a browser notification.
-              </p>
+            <div className="flex gap-4 p-3 rounded-lg hover:bg-muted/50 transition-colors">
+              <div className="flex-shrink-0">
+                <div className="p-2 rounded-lg bg-green-500/10">
+                  <Bell className="h-5 w-5 text-green-500" />
+                </div>
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold text-foreground mb-1">Send notifications</p>
+                <p className="text-sm text-muted-foreground">Click on any team member's card to instantly send them a notification. They'll see a visual flash and receive a browser notification.</p>
+              </div>
             </div>
-            <div className="space-y-2">
-              <h4 className="font-semibold text-sm flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                Your card
-              </h4>
-              <p className="text-sm text-muted-foreground">
-                Your card is marked with a "You" badge. You can still notify yourself if needed.
-              </p>
+            <div className="flex gap-4 p-3 rounded-lg hover:bg-muted/50 transition-colors">
+              <div className="flex-shrink-0">
+                <div className="p-2 rounded-lg bg-blue-500/10">
+                  <Users className="h-5 w-5 text-blue-500" />
+                </div>
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold text-foreground mb-1">Your card</p>
+                <p className="text-sm text-muted-foreground">Your card is marked with a "You" badge. You can still notify yourself if needed.</p>
+              </div>
             </div>
-            <div className="space-y-2">
-              <h4 className="font-semibold text-sm flex items-center gap-2">
-                <Copy className="h-4 w-4" />
-                Sharing the team
-              </h4>
-              <p className="text-sm text-muted-foreground">
-                Use the "Copy Invite Link" button to share the team link with others. They can join instantly without creating an account.
-              </p>
+            <div className="flex gap-4 p-3 rounded-lg hover:bg-muted/50 transition-colors">
+              <div className="flex-shrink-0">
+                <div className="p-2 rounded-lg bg-purple-500/10">
+                  <Share2 className="h-5 w-5 text-purple-500" />
+                </div>
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold text-foreground mb-1">Share ping URLs</p>
+                <p className="text-sm text-muted-foreground">Use the share button on each member's card to copy their ping URL. Share this URL to notify them directly via a link.</p>
+              </div>
             </div>
-            <div className="space-y-2">
-              <h4 className="font-semibold text-sm flex items-center gap-2">
-                <Edit className="h-4 w-4" />
-                Edit mode
-              </h4>
-              <p className="text-sm text-muted-foreground">
-                Toggle edit mode to rename members or change their colors. In edit mode, clicking cards won't send notifications.
-              </p>
+            <div className="flex gap-4 p-3 rounded-lg hover:bg-muted/50 transition-colors">
+              <div className="flex-shrink-0">
+                <div className="p-2 rounded-lg bg-orange-500/10">
+                  <Palette className="h-5 w-5 text-orange-500" />
+                </div>
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold text-foreground mb-1">Edit members</p>
+                <p className="text-sm text-muted-foreground">Use the edit button on each card to rename members or change their colors. The share and edit buttons are always visible on every card.</p>
+              </div>
+            </div>
+            <div className="flex gap-4 p-3 rounded-lg hover:bg-muted/50 transition-colors">
+              <div className="flex-shrink-0">
+                <div className="p-2 rounded-lg bg-red-500/10">
+                  <Trash2 className="h-5 w-5 text-red-500" />
+                </div>
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold text-foreground mb-1">Delete members</p>
+                <p className="text-sm text-muted-foreground">Click the delete button on any member's card to remove them from the team. You'll be asked to confirm before deletion.</p>
+              </div>
+            </div>
+            <div className="flex gap-4 p-3 rounded-lg hover:bg-muted/50 transition-colors">
+              <div className="flex-shrink-0">
+                <div className="p-2 rounded-lg bg-yellow-500/10">
+                  <Zap className="h-5 w-5 text-yellow-500" />
+                </div>
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold text-foreground mb-1">Real-time updates</p>
+                <p className="text-sm text-muted-foreground">All changes sync instantly across all devices. Perfect for coordinating turns in meetings or group activities.</p>
+              </div>
             </div>
           </div>
           <DialogFooter>
