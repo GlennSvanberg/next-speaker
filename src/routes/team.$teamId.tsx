@@ -19,6 +19,7 @@ import {
 } from '~/components/ui/dialog'
 import { Copy, Edit, Trash2, Pencil, Check, ArrowLeft, HelpCircle, Hand, Users, Menu, Share2 } from 'lucide-react'
 import { useNotifications } from '~/lib/useNotifications'
+import { PWAInstallPrompt } from '~/components/PWAInstallPrompt'
 
 export const Route = createFileRoute('/team/$teamId')({
   component: TeamPage,
@@ -123,6 +124,7 @@ function TeamPage() {
   const [joinMemberColor, setJoinMemberColor] = useState<string | null>(null)
   const [isJoining, setIsJoining] = useState(false)
   const [isLinkCopied, setIsLinkCopied] = useState(false)
+  const [copiedPingUrlMemberId, setCopiedPingUrlMemberId] = useState<Id<'members'> | null>(null)
   const [showHelpDialog, setShowHelpDialog] = useState(false)
   const [showMobileMenu, setShowMobileMenu] = useState(false)
   const [notifiedMembers, setNotifiedMembers] = useState<Set<Id<'members'>>>(new Set())
@@ -304,6 +306,34 @@ function TeamPage() {
       setIsLinkCopied(false)
       setToastMessage(null)
     }, 2000)
+  }
+
+  const copyPingUrl = (toMemberId: Id<'members'>) => {
+    if (!currentMemberId) {
+      setToastMessage('You must be a member to generate ping URLs')
+      setTimeout(() => {
+        setToastMessage(null)
+      }, 3000)
+      return
+    }
+
+    // Use the app's base URL instead of Convex URL
+    const pingUrl = `${window.location.origin}/api/ping?teamId=${encodeURIComponent(teamId)}&toMemberId=${encodeURIComponent(toMemberId)}&fromMemberId=${encodeURIComponent(currentMemberId)}`
+    
+    navigator.clipboard.writeText(pingUrl).then(() => {
+      setCopiedPingUrlMemberId(toMemberId)
+      setToastMessage('Ping URL copied to clipboard!')
+      setTimeout(() => {
+        setCopiedPingUrlMemberId(null)
+        setToastMessage(null)
+      }, 2000)
+    }).catch((err) => {
+      console.error('Failed to copy ping URL:', err)
+      setToastMessage('Failed to copy ping URL')
+      setTimeout(() => {
+        setToastMessage(null)
+      }, 3000)
+    })
   }
 
   const handleJoinTeam = async (e: React.FormEvent) => {
@@ -521,6 +551,11 @@ function TeamPage() {
           </div>
         </div>
       )}
+      
+      {/* PWA Install Prompt Banner */}
+      <div className="flex-shrink-0 mb-4">
+        <PWAInstallPrompt delay={2000} />
+      </div>
       
       {/* Header */}
       <div className="flex-shrink-0 mb-4 sm:mb-6">
@@ -759,6 +794,23 @@ function TeamPage() {
                     <div className="flex flex-col items-center justify-center space-y-3 relative h-full z-10">
                       {isEditMode && (
                         <div className="flex gap-2 w-full justify-end absolute top-2 right-2 z-20">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-10 w-10 min-h-[44px] min-w-[44px] bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white border border-white/30 shadow-lg"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              copyPingUrl(member._id)
+                            }}
+                            aria-label={`Copy ping URL for ${member.name}`}
+                            title={`Copy ping URL for ${member.name}`}
+                          >
+                            {copiedPingUrlMemberId === member._id ? (
+                              <Check className="h-4 w-4" />
+                            ) : (
+                              <Share2 className="h-4 w-4" />
+                            )}
+                          </Button>
                           <Button
                             variant="ghost"
                             size="icon"

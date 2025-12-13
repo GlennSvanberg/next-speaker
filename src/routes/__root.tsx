@@ -18,10 +18,39 @@ export const Route = createRootRouteWithContext<{
       },
       {
         name: 'viewport',
-        content: 'width=device-width, initial-scale=1',
+        content: 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover',
       },
       {
         title: 'Ping',
+      },
+      {
+        name: 'description',
+        content: 'Simple, instant notifications for team turn-taking. Perfect for meetings, presentations, and group activities.',
+      },
+      {
+        name: 'theme-color',
+        content: '#ffffff',
+      },
+      {
+        name: 'mobile-web-app-capable',
+        content: 'yes',
+      },
+      // iOS-specific meta tags
+      {
+        name: 'apple-mobile-web-app-capable',
+        content: 'yes',
+      },
+      {
+        name: 'apple-mobile-web-app-status-bar-style',
+        content: 'black-translucent',
+      },
+      {
+        name: 'apple-mobile-web-app-title',
+        content: 'Ping',
+      },
+      {
+        name: 'format-detection',
+        content: 'telephone=no',
       },
     ],
     links: [
@@ -29,22 +58,22 @@ export const Route = createRootRouteWithContext<{
       {
         rel: 'apple-touch-icon',
         sizes: '180x180',
-        href: '/icon.png',
+        href: '/apple-touch-icon.png',
       },
       {
         rel: 'icon',
         type: 'image/png',
         sizes: '32x32',
-        href: '/icon.png',
+        href: '/favicon-32x32.png',
       },
       {
         rel: 'icon',
         type: 'image/png',
         sizes: '16x16',
-        href: '/icon.png',
+        href: '/favicon-16x16.png',
       },
-      { rel: 'manifest', href: '/site.webmanifest', color: '#fffff' },
-      { rel: 'icon', href: '/icon.png' },
+      { rel: 'manifest', href: '/site.webmanifest' },
+      { rel: 'icon', href: '/favicon.ico' },
     ],
   }),
   notFoundComponent: () => <div>Route not found</div>,

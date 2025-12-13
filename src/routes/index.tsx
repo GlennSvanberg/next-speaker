@@ -11,6 +11,7 @@ import { Input } from '~/components/ui/input'
 import { Badge } from '~/components/ui/badge'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '~/components/ui/dialog'
 import { Info, Users, Bell, Link2, Zap, Trash2, X, Sparkles, CheckCircle2, ArrowRight, Shield, Clock, Rocket } from 'lucide-react'
+import { PWAInstallPrompt } from '~/components/PWAInstallPrompt'
 
 export const Route = createFileRoute('/')({
   component: Home,
@@ -706,6 +707,15 @@ function Home() {
           </Card>
         </div>
       </section>
+
+      {/* PWA Install Prompt */}
+      {(userTeamIds?.length > 0 || isCreating) && (
+        <section className="py-8 px-4 sm:px-8">
+          <div className="max-w-2xl mx-auto">
+            <PWAInstallPrompt delay={3000} />
+          </div>
+        </section>
+      )}
 
       {/* Error Display */}
       {error && (

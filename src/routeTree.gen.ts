@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TeamTeamIdRouteImport } from './routes/team.$teamId'
+import { Route as ApiPingRouteImport } from './routes/api.ping'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -22,30 +23,39 @@ const TeamTeamIdRoute = TeamTeamIdRouteImport.update({
   path: '/team/$teamId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPingRoute = ApiPingRouteImport.update({
+  id: '/api/ping',
+  path: '/api/ping',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/api/ping': typeof ApiPingRoute
   '/team/$teamId': typeof TeamTeamIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/api/ping': typeof ApiPingRoute
   '/team/$teamId': typeof TeamTeamIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/api/ping': typeof ApiPingRoute
   '/team/$teamId': typeof TeamTeamIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/team/$teamId'
+  fullPaths: '/' | '/api/ping' | '/team/$teamId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/team/$teamId'
-  id: '__root__' | '/' | '/team/$teamId'
+  to: '/' | '/api/ping' | '/team/$teamId'
+  id: '__root__' | '/' | '/api/ping' | '/team/$teamId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ApiPingRoute: typeof ApiPingRoute
   TeamTeamIdRoute: typeof TeamTeamIdRoute
 }
 
@@ -65,11 +75,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TeamTeamIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/ping': {
+      id: '/api/ping'
+      path: '/api/ping'
+      fullPath: '/api/ping'
+      preLoaderRoute: typeof ApiPingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ApiPingRoute: ApiPingRoute,
   TeamTeamIdRoute: TeamTeamIdRoute,
 }
 export const routeTree = rootRouteImport
