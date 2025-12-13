@@ -104,14 +104,20 @@ export function useNotifications() {
 
         if (registration && 'showNotification' in registration) {
           // Use Service Worker API - works even when page is backgrounded
-          await registration.showNotification(title, {
+          const notificationOptions: any = {
             icon: '/favicon.png',
             badge: '/favicon.png',
             tag: options?.tag || 'next-speaker-notification',
             requireInteraction: true, // Keep notification visible until user interacts
             vibrate: [200, 100, 200], // Vibrate pattern for mobile devices
             ...options,
-          } as NotificationOptions & { vibrate?: number[] })
+          }
+          // Ensure data field is included if present
+          if ((options as any)?.data) {
+            notificationOptions.data = (options as any).data
+          }
+          console.log('Showing notification via service worker with options:', notificationOptions)
+          await registration.showNotification(title, notificationOptions)
           return // Successfully shown via service worker
         } else {
           // Fallback to Notification API (only works when page is active)

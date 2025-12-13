@@ -3,6 +3,7 @@ import {
   Outlet,
   Scripts,
   createRootRouteWithContext,
+  useNavigate,
 } from '@tanstack/react-router'
 import * as React from 'react'
 import type { QueryClient } from '@tanstack/react-query'
@@ -81,6 +82,34 @@ export const Route = createRootRouteWithContext<{
 })
 
 function RootComponent() {
+  const navigate = useNavigate()
+
+  // Listen for navigation messages from service worker
+  React.useEffect(() => {
+    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+      const handleMessage = (event: MessageEvent) => {
+        if (event.data && event.data.type === 'NAVIGATE') {
+          const url = event.data.url
+          if (url) {
+            // Extract teamId from URL if it's a team page
+            const teamMatch = url.match(/\/team\/([^/]+)/)
+            if (teamMatch) {
+              navigate({ to: '/team/$teamId', params: { teamId: teamMatch[1] } })
+            } else {
+              navigate({ to: '/' })
+            }
+          }
+        }
+      }
+
+      navigator.serviceWorker.addEventListener('message', handleMessage)
+
+      return () => {
+        navigator.serviceWorker.removeEventListener('message', handleMessage)
+      }
+    }
+  }, [navigate])
+
   return (
     <RootDocument>
       <Outlet />

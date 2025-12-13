@@ -298,6 +298,7 @@ function TeamPage() {
 
       // Show OS notification with more prominent message
       if (team) {
+        console.log('Showing notification for team:', teamId)
         showNotification(`🎯 YOU GOT PINGED!`, {
           body: `${team.name} needs you right now!`,
           requireInteraction: true, // Keep notification visible until user interacts

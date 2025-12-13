@@ -157,31 +157,32 @@ self.addEventListener('notificationclick', (event) => {
   const teamId = event.notification.data?.teamId
   const targetUrl = teamId ? `/team/${teamId}` : '/'
   
+  console.log('Notification clicked, teamId:', teamId, 'targetUrl:', targetUrl)
+  
   // Focus or open the app
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-      // If a window is already open, navigate it to the team page and focus it
-      for (const client of clientList) {
-        if (client.url === self.location.origin && 'focus' in client) {
-          // Navigate to team page if not already there
-          if (teamId && !client.url.includes(`/team/${teamId}`)) {
-            // Try to use navigate() if available
-            if ('navigate' in client && typeof client.navigate === 'function') {
-              return client.navigate(targetUrl).then(() => client.focus())
-            }
-            // If navigate() not available, focus the window (user can navigate manually)
-            // or open a new window for better UX
-            if (self.clients.openWindow) {
-              return self.clients.openWindow(targetUrl)
-            }
-            return client.focus()
-          }
-          return client.focus()
+      // Check if there's an existing window open
+      const existingClient = clientList.find(
+        (client) => client.url === self.location.origin || client.url.startsWith(self.location.origin)
+      )
+      
+      if (existingClient) {
+        // Try to navigate existing window first
+        if ('navigate' in existingClient && typeof existingClient.navigate === 'function') {
+          console.log('Navigating existing window to:', targetUrl)
+          return existingClient.navigate(targetUrl).then(() => existingClient.focus())
         }
-      }
-      // Otherwise, open a new window to the team page
-      if (self.clients.openWindow) {
-        return self.clients.openWindow(targetUrl)
+        // If navigate() not available, send message to navigate
+        console.log('Sending navigate message to existing window:', targetUrl)
+        existingClient.postMessage({ type: 'NAVIGATE', url: targetUrl })
+        return existingClient.focus()
+      } else {
+        // No existing window, open a new one
+        console.log('Opening new window to:', targetUrl)
+        if (self.clients.openWindow) {
+          return self.clients.openWindow(targetUrl)
+        }
       }
     })
   )
