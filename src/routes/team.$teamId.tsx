@@ -17,7 +17,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '~/components/ui/dialog'
 import { Copy, Edit, Trash2, Pencil, Check, ArrowLeft } from 'lucide-react'
 import { useNotifications } from '~/lib/useNotifications'
@@ -423,8 +422,6 @@ function TeamPage() {
     )
   }
 
-  const currentMember = members.find((m) => m._id === currentMemberId)
-
   // If user is not a member, show join dialog
   if (!isMember) {
     return (
@@ -538,9 +535,6 @@ function TeamPage() {
             {members.map((member) => {
               const memberColor = getMemberColor(member)
               const hasCustomColor = !!member.color
-              
-              // Create darker shade for gradient
-              const darkerShade = memberColor + 'CC' // Add opacity
               
               return (
                 <Card

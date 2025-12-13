@@ -14,16 +14,6 @@ export const Route = createFileRoute('/')({
   component: Home,
 })
 
-// Helper function to manage userTeams array in localStorage
-function addTeamToUserTeams(teamId: string) {
-  const stored = localStorage.getItem('userTeams')
-  const teams = stored ? JSON.parse(stored) : []
-  if (!teams.includes(teamId)) {
-    teams.push(teamId)
-    localStorage.setItem('userTeams', JSON.stringify(teams))
-  }
-}
-
 // Generate a deterministic color for members without one (based on member ID)
 const MEMBER_COLORS = [
   '#EF4444', // Modern Red
