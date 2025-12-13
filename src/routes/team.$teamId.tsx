@@ -17,7 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '~/components/ui/dialog'
-import { Copy, Edit, Trash2, Pencil, Check, ArrowLeft, HelpCircle, Hand, Users, Menu } from 'lucide-react'
+import { Copy, Edit, Trash2, Pencil, Check, ArrowLeft, HelpCircle, Hand, Users, Menu, Share2 } from 'lucide-react'
 import { useNotifications } from '~/lib/useNotifications'
 
 export const Route = createFileRoute('/team/$teamId')({
@@ -505,15 +505,15 @@ function TeamPage() {
 
   return (
     <main className={`h-screen flex flex-col p-4 sm:p-6 lg:p-8 relative overflow-hidden ${shouldFlash ? 'notification-flash' : ''}`}>
-      {/* Background gradient overlay */}
-      <div className="fixed inset-0 bg-gradient-to-br from-background via-background to-muted/10 pointer-events-none -z-10" />
+      {/* Background gradient overlay - matching landing page style */}
+      <div className="fixed inset-0 bg-gradient-to-br from-background via-background to-background/95 pointer-events-none -z-10" />
       
-      {/* Toast Notification */}
+      {/* Toast Notification - matching landing page style */}
       {toastMessage && (
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[10000] transition-opacity duration-300 max-w-[calc(100vw-2rem)]">
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[10000] transition-all duration-300 max-w-[calc(100vw-2rem)] animate-in fade-in slide-in-from-bottom-2">
           <div 
-            className="rounded-xl border border-border/50 bg-background/95 backdrop-blur-sm shadow-2xl"
-            style={{ backgroundColor: 'hsl(var(--background) / 0.95)' }}
+            className="rounded-xl border border-border/50 bg-card/95 backdrop-blur-md shadow-2xl"
+            style={{ backgroundColor: 'hsl(var(--card) / 0.95)' }}
           >
             <div className="pt-4 pb-4 px-5">
               <p className="text-sm font-semibold text-foreground">{toastMessage}</p>
@@ -535,9 +535,26 @@ function TeamPage() {
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold break-words">
-              {team.name}
-            </h1>
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold break-words text-foreground flex items-center gap-2 sm:gap-3">
+                <span>{team.name}</span>
+                {/* Share icon styled to match title */}
+                <button
+                  onClick={() => {
+                    copyTeamLink()
+                  }}
+                  className="inline-flex items-center justify-center hover:opacity-70 transition-opacity flex-shrink-0 cursor-pointer"
+                  aria-label="Share team link"
+                  title="Share team link"
+                >
+                  {isLinkCopied ? (
+                    <Check className="h-[1em] w-[1em] text-foreground" strokeWidth={2.5} />
+                  ) : (
+                    <Share2 className="h-[1em] w-[1em] text-foreground hover:scale-110 transition-transform" strokeWidth={2.5} />
+                  )}
+                </button>
+              </h1>
+            </div>
           </div>
           
           {/* Hamburger menu - always visible */}
@@ -623,7 +640,7 @@ function TeamPage() {
       </div>
 
       <Card className="border-0 shadow-none flex-1 min-h-0 flex flex-col bg-transparent">
-        <CardContent className="flex-1 min-h-0 p-3 sm:p-4 lg:p-6">
+        <CardContent className="flex-1 min-h-0 p-4 sm:p-5 lg:p-6">
           <div 
             className="grid gap-4 sm:gap-5 lg:gap-6 h-full auto-rows-fr w-full"
             style={{
