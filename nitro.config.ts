@@ -1,6 +1,6 @@
 export default {
   preset: 'vercel',
   output: {
-    dir: '.output',
+    dir: '.vercel/output',
   },
 }
