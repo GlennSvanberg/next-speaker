@@ -245,7 +245,7 @@ function TeamPage() {
 
       // Show OS notification with more prominent message
       if (team) {
-        showNotification(`🎯 IT'S YOUR TURN!`, {
+        showNotification(`🎯 YOU GOT PINGED!`, {
           body: `${team.name} needs you right now!`,
           requireInteraction: true, // Keep notification visible until user interacts
           tag: `turn-notification-${currentMemberId}`, // Unique tag for this user
@@ -796,7 +796,7 @@ function TeamPage() {
       <Dialog open={showHelpDialog} onOpenChange={setShowHelpDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>How to use Your turn</DialogTitle>
+            <DialogTitle>How to use Ping</DialogTitle>
             <DialogDescription>
               Quick guide to using the app
             </DialogDescription>

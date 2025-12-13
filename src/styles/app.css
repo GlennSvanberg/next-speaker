@@ -173,6 +173,41 @@
   .delay-300 {
     animation-delay: 300ms;
   }
+
+  .delay-400 {
+    animation-delay: 400ms;
+  }
+
+  .delay-500 {
+    animation-delay: 500ms;
+  }
+
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  @keyframes gradient-shift {
+    0%, 100% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+  }
+
+  .animate-gradient {
+    background-size: 200% 200%;
+    animation: gradient-shift 3s ease infinite;
+  }
 }
 
 @layer utilities {
@@ -313,5 +348,34 @@
 
   .animate-fade-in-delayed {
     animation: fade-in-delayed 1s ease-out;
+  }
+
+  /* Admin notification animation */
+  @keyframes admin-notification {
+    0% {
+      opacity: 0;
+      transform: scale(0.5) rotate(-10deg);
+    }
+    20% {
+      opacity: 1;
+      transform: scale(1.1) rotate(5deg);
+    }
+    40% {
+      transform: scale(0.95) rotate(-2deg);
+    }
+    60% {
+      transform: scale(1.05) rotate(1deg);
+    }
+    80% {
+      transform: scale(1) rotate(0deg);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1) rotate(0deg);
+    }
+  }
+
+  .animate-admin-notification {
+    animation: admin-notification 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
   }
 }

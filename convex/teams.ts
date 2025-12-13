@@ -184,6 +184,45 @@ export const deleteMember = mutation({
   },
 })
 
+// Delete a team and all its members and notifications
+export const deleteTeam = mutation({
+  args: {
+    teamId: v.id('teams'),
+  },
+  handler: async (ctx, args) => {
+    // Verify team exists
+    const team = await ctx.db.get(args.teamId)
+    if (!team) {
+      throw new Error('Team not found')
+    }
+
+    // Delete all members of the team
+    const members = await ctx.db
+      .query('members')
+      .withIndex('by_teamId', (q) => q.eq('teamId', args.teamId))
+      .collect()
+    
+    for (const member of members) {
+      await ctx.db.delete(member._id)
+    }
+
+    // Delete all notifications for the team
+    const notifications = await ctx.db
+      .query('notifications')
+      .withIndex('by_teamId', (q) => q.eq('teamId', args.teamId))
+      .collect()
+    
+    for (const notification of notifications) {
+      await ctx.db.delete(notification._id)
+    }
+
+    // Delete the team itself
+    await ctx.db.delete(args.teamId)
+
+    return { success: true }
+  },
+})
+
 // Rename a member
 export const renameMember = mutation({
   args: {

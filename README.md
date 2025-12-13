@@ -1,57 +1,57 @@
-# Your turn
+# Ping
 
 A simple, no-authentication real-time notification app for team turn-taking. Think of it as a digital "tap on the shoulder" - quick, effective, and zero friction.
 
-## 🎯 What is Your turn?
+## 🎯 What is Ping?
 
-Your turn is designed for teams who need a simple way to signal whose turn it is to speak. No logins, no accounts, no complexity. Just create a team, share the link, and start notifying each other.
+Ping is designed for teams who need a simple way to signal whose turn it is to speak. No logins, no accounts, no complexity. Just create a team, share the link, and start notifying each other.
 
 ### Key Design Decisions
 
 1. **No Authentication**: We deliberately skipped authentication to make setup instant. Anyone with a team link can join - the unique team ID is the security mechanism.
-
 2. **Link-Based Access**: Teams are accessed via shareable links. The team creator gets a unique URL that they can share with team members.
-
 3. **Visual Card-Based UI**: Team members are displayed as cards in a grid. Click anywhere on a card to send a quick notification, or use the "Send message" button for a custom message.
-
 4. **Self-Notification Allowed**: You can notify yourself - useful for testing or self-reminders.
-
 5. **Minimal Notification History**: History is intentionally less prominent - it's there for reference but doesn't dominate the interface.
-
 6. **Real-Time Updates**: All changes sync instantly across all devices using Convex's real-time subscriptions.
 
 ## 🚀 Getting Started
 
 ### Prerequisites
 
-- Node.js 18+ 
+- Node.js 18+
 - npm or yarn
 - A Convex account (sign up at [convex.dev](https://convex.dev))
 
 ### Installation
 
 1. Clone the repository:
+
 ```bash
 git clone <repository-url>
 cd next-speaker
 ```
 
-2. Install dependencies:
+1. Install dependencies:
+
 ```bash
 npm install
 ```
 
-3. Set up Convex:
+1. Set up Convex:
+
 ```bash
 npx convex dev
 ```
 
-4. Set your Convex URL in `.env`:
-```
+1. Set your Convex URL in `.env`:
+
+```javascript
 VITE_CONVEX_URL=your-convex-url
 ```
 
-5. Start the development server:
+1. Start the development server:
+
 ```bash
 npm run dev
 ```
@@ -76,9 +76,11 @@ npm run dev
 ### Sending Notifications
 
 **Quick Notification** (no message):
+
 - Click anywhere on a team member's card
 
 **Notification with Message**:
+
 - Click the "Send message" button on a member's card
 - Enter your optional message
 - Click "Send Notification"
@@ -100,7 +102,7 @@ npm run dev
 
 ## 📁 Project Structure
 
-```
+```javascript
 next-speaker/
 ├── convex/           # Backend (Convex functions and schema)
 │   ├── schema.ts     # Database schema
@@ -172,7 +174,7 @@ This is a simple, focused app. When contributing:
 
 ## 📄 License
 
-[Add your license here]
+\[Add your license here]
 
 ## 🙏 Acknowledgments
 
