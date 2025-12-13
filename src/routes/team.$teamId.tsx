@@ -302,6 +302,7 @@ function TeamPage() {
           body: `${team.name} needs you right now!`,
           requireInteraction: true, // Keep notification visible until user interacts
           tag: `turn-notification-${currentMemberId}`, // Unique tag for this user
+          data: { teamId: teamId }, // Include teamId for navigation
         })
       }
     } else {

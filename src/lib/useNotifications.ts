@@ -124,9 +124,14 @@ export function useNotifications() {
             ...options,
           } as NotificationOptions & { vibrate?: number[] })
 
-          // Handle notification click - focus the window
+          // Handle notification click - navigate to team page if teamId is provided
           notification.onclick = () => {
-            window.focus()
+            const teamId = (options as any)?.data?.teamId
+            if (teamId) {
+              window.location.href = `/team/${teamId}`
+            } else {
+              window.focus()
+            }
             notification.close()
           }
         }
@@ -141,8 +146,14 @@ export function useNotifications() {
             requireInteraction: true,
             ...options,
           })
+          // Handle notification click - navigate to team page if teamId is provided
           notification.onclick = () => {
-            window.focus()
+            const teamId = (options as any)?.data?.teamId
+            if (teamId) {
+              window.location.href = `/team/${teamId}`
+            } else {
+              window.focus()
+            }
             notification.close()
           }
         } catch (fallbackError) {

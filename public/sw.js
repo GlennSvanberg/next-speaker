@@ -153,18 +153,35 @@ self.addEventListener('message', async (event) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close()
   
+  // Extract teamId from notification data
+  const teamId = event.notification.data?.teamId
+  const targetUrl = teamId ? `/team/${teamId}` : '/'
+  
   // Focus or open the app
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-      // If a window is already open, focus it
+      // If a window is already open, navigate it to the team page and focus it
       for (const client of clientList) {
         if (client.url === self.location.origin && 'focus' in client) {
+          // Navigate to team page if not already there
+          if (teamId && !client.url.includes(`/team/${teamId}`)) {
+            // Try to use navigate() if available
+            if ('navigate' in client && typeof client.navigate === 'function') {
+              return client.navigate(targetUrl).then(() => client.focus())
+            }
+            // If navigate() not available, focus the window (user can navigate manually)
+            // or open a new window for better UX
+            if (self.clients.openWindow) {
+              return self.clients.openWindow(targetUrl)
+            }
+            return client.focus()
+          }
           return client.focus()
         }
       }
-      // Otherwise, open a new window
+      // Otherwise, open a new window to the team page
       if (self.clients.openWindow) {
-        return self.clients.openWindow('/')
+        return self.clients.openWindow(targetUrl)
       }
     })
   )
