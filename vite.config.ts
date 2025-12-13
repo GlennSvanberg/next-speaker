@@ -145,7 +145,9 @@ export default defineConfig(({ mode }) => {
       }),
       apiProxyPlugin(), // Add our custom plugin before tanstackStart
       tanstackStart(),
-      nitro(),
+      nitro({
+        preset: 'vercel',
+      }),
       viteReact(),
     ],
   }
