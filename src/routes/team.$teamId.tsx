@@ -901,7 +901,7 @@ function TeamPage() {
       {/* Help Dialog */}
       <Dialog open={showHelpDialog} onOpenChange={setShowHelpDialog}>
         <DialogContent className="sm:max-w-lg border-2" style={{ backgroundColor: 'hsl(var(--background))' }}>
-          <DialogHeader>
+          <DialogHeader className="flex-shrink-0">
             <DialogTitle className="text-xl flex items-center gap-2">
               <HelpCircle className="h-5 w-5 text-primary" />
               How to use Ping
@@ -910,7 +910,7 @@ function TeamPage() {
               Quick guide to using the team page
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
+          <div className="space-y-4 py-4 overflow-y-auto flex-1 min-h-0">
             <div className="flex gap-4 p-3 rounded-lg hover:bg-muted/50 transition-colors">
               <div className="flex-shrink-0">
                 <div className="p-2 rounded-lg bg-green-500/10">
@@ -978,7 +978,7 @@ function TeamPage() {
               </div>
             </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="flex-shrink-0">
             <Button onClick={() => setShowHelpDialog(false)}>Got it</Button>
           </DialogFooter>
         </DialogContent>
