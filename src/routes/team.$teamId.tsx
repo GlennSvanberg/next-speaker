@@ -112,6 +112,8 @@ function TeamPage() {
 
   const [currentMemberId, setCurrentMemberId] = useState<Id<'members'> | null>(null)
   const [shouldFlash, setShouldFlash] = useState(false)
+  const [notificationOverlayText, setNotificationOverlayText] = useState<string | null>(null)
+  const [notificationOverlayColor, setNotificationOverlayColor] = useState<string | null>(null)
   const [toastMessage, setToastMessage] = useState<string | null>(null)
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false)
   const [editingMemberId, setEditingMemberId] = useState<Id<'members'> | null>(null)
@@ -204,6 +206,8 @@ function TeamPage() {
   const resetFlash = useCallback(() => {
     console.log('Resetting flash state')
     setShouldFlash(false)
+    setNotificationOverlayText(null)
+    setNotificationOverlayColor(null)
     isFlashingRef.current = false
     flashStartTimeRef.current = null
     document.documentElement.style.setProperty('--notification-flash', '0 0% 50%')
@@ -228,11 +232,24 @@ function TeamPage() {
       return
     }
 
-    // Find new notifications that are for the current user
+    // Find new notifications that are for the current user OR self-notifications (visible to all team members)
     const newNotifications = notifications.filter(
-      (notification) =>
-        notification.toMemberId === currentMemberId &&
-        !previousNotificationIds.current.has(notification._id)
+      (notification) => {
+        const isNew = !previousNotificationIds.current.has(notification._id)
+        if (!isNew) return false
+        
+        // Normal notification: recipient is current user
+        if (notification.toMemberId === currentMemberId) {
+          return true
+        }
+        
+        // Self-notification: fromMemberId === toMemberId (visible to all team members)
+        if (notification.fromMemberId === notification.toMemberId) {
+          return true
+        }
+        
+        return false
+      }
     )
 
     if (newNotifications.length > 0) {
@@ -274,13 +291,40 @@ function TeamPage() {
       console.log('New notification detected for current user:', newNotifications)
       console.log('Triggering flash animation')
       
-      // Get current user's color for the flash animation
-      const currentMember = members.find((m) => m._id === currentMemberId)
-      const userColor = currentMember?.color || generateColorForMember(currentMemberId)
-      const userColorHsl = hexToHsl(userColor)
+      // Determine which color to use for the flash animation
+      // For self-notifications, use the sender's color (visible to all team members)
+      // For normal notifications, use the current user's (recipient's) color
+      const selfNotification = newNotifications.find(
+        (n) => n.fromMemberId === n.toMemberId
+      )
+      
+      let flashColor: string
+      let overlayName: string | null = null
+      
+      if (selfNotification) {
+        // Self-notification: use sender's color and show sender's name
+        const senderMember = members.find((m) => m._id === selfNotification.fromMemberId)
+        flashColor = senderMember?.color || generateColorForMember(selfNotification.fromMemberId)
+        overlayName = selfNotification.fromMemberName || senderMember?.name || 'Unknown'
+      } else {
+        // Normal notification: use current user's (recipient's) color and show recipient's name
+        const currentMember = members.find((m) => m._id === currentMemberId)
+        flashColor = currentMember?.color || generateColorForMember(currentMemberId)
+        // Find the notification that's for the current user
+        const userNotification = newNotifications.find(
+          (n) => n.toMemberId === currentMemberId
+        )
+        overlayName = userNotification?.toMemberName || currentMember?.name || 'Unknown'
+      }
+      
+      const userColorHsl = hexToHsl(flashColor)
       
       // Set CSS variable with user's color
       document.documentElement.style.setProperty('--notification-flash', userColorHsl)
+      
+      // Set overlay text and color
+      setNotificationOverlayText(overlayName)
+      setNotificationOverlayColor(flashColor)
       
       // Mark flash as active and record start time
       isFlashingRef.current = true
@@ -408,6 +452,23 @@ function TeamPage() {
     }).catch((err) => {
       console.error('Failed to copy ping URL:', err)
       setToastMessage('Failed to copy ping URL')
+      setTimeout(() => {
+        setToastMessage(null)
+      }, 3000)
+    })
+  }
+
+  const copyTeamLink = () => {
+    const teamLink = `${window.location.origin}/team/${teamId}`
+    
+    navigator.clipboard.writeText(teamLink).then(() => {
+      setToastMessage('Team link copied to clipboard!')
+      setTimeout(() => {
+        setToastMessage(null)
+      }, 2000)
+    }).catch((err) => {
+      console.error('Failed to copy team link:', err)
+      setToastMessage('Failed to copy team link')
       setTimeout(() => {
         setToastMessage(null)
       }, 3000)
@@ -634,6 +695,28 @@ function TeamPage() {
       {/* Background gradient overlay - matching landing page style */}
       <div className="fixed inset-0 bg-gradient-to-br from-background via-background to-background/95 pointer-events-none -z-10" />
       
+      {/* Notification Overlay Text */}
+      {notificationOverlayText && notificationOverlayColor && (
+        <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-[9999]">
+          <div className="text-center px-4">
+            <div 
+              className="px-8 py-6 sm:px-12 sm:py-8 lg:px-16 lg:py-10 rounded-2xl sm:rounded-3xl animate-in fade-in zoom-in duration-300"
+              style={{ 
+                backgroundColor: 'hsl(var(--card))',
+                boxShadow: `0 0 40px ${notificationOverlayColor}80, 0 0 80px ${notificationOverlayColor}60, 0 0 120px ${notificationOverlayColor}40, 0 0 0 4px ${notificationOverlayColor}40`
+              }}
+            >
+              <h2 
+                className="text-5xl sm:text-6xl lg:text-7xl font-bold drop-shadow-2xl"
+                style={{ color: notificationOverlayColor }}
+              >
+                {notificationOverlayText}
+              </h2>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {/* Toast Notification - matching landing page style */}
       {toastMessage && (
         <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[10000] transition-all duration-300 max-w-[calc(100vw-2rem)] animate-in fade-in slide-in-from-bottom-2">
@@ -670,6 +753,16 @@ function TeamPage() {
               <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold break-words text-foreground">
                 {team.name}
               </h1>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={copyTeamLink}
+                className="hover:bg-muted/50 transition-all rounded-lg flex-shrink-0 p-2"
+                aria-label="Copy team link"
+                title="Copy team link"
+              >
+                <Share2 className="h-6 w-6 sm:h-8 sm:w-8 lg:h-10 lg:w-10" />
+              </Button>
             </div>
           </div>
           
