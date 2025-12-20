@@ -894,13 +894,13 @@ function TeamPage() {
                         </div>
                       </div>
                     )}
-                    <div className="flex flex-col items-center justify-center space-y-3 relative h-full z-10">
-                      {/* Edit buttons - always visible */}
-                      <div className="flex gap-2 w-full justify-end absolute top-2 right-2 z-20">
+                    <div className="flex h-full flex-col relative z-10">
+                      {/* Action buttons (share/edit/delete) - keep in normal flow so they never cover the name */}
+                      <div className="flex w-full justify-end gap-1 sm:gap-2 p-2">
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-10 w-10 min-h-[44px] min-w-[44px] bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white border border-white/30 shadow-lg"
+                          className="h-9 w-9 min-h-[36px] min-w-[36px] sm:h-10 sm:w-10 sm:min-h-[44px] sm:min-w-[44px] bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white border border-white/30 shadow-lg"
                           onClick={(e) => {
                             e.stopPropagation()
                             copyPingUrl(member._id)
@@ -917,7 +917,7 @@ function TeamPage() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-10 w-10 min-h-[44px] min-w-[44px] bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white border border-white/30 shadow-lg"
+                          className="h-9 w-9 min-h-[36px] min-w-[36px] sm:h-10 sm:w-10 sm:min-h-[44px] sm:min-w-[44px] bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white border border-white/30 shadow-lg"
                           onClick={(e) => {
                             e.stopPropagation()
                             openRenameDialog(member._id)
@@ -930,7 +930,7 @@ function TeamPage() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-10 w-10 min-h-[44px] min-w-[44px] bg-red-500/20 backdrop-blur-sm hover:bg-red-500/30 text-white border border-red-300/30 shadow-lg"
+                          className="h-9 w-9 min-h-[36px] min-w-[36px] sm:h-10 sm:w-10 sm:min-h-[44px] sm:min-w-[44px] bg-red-500/20 backdrop-blur-sm hover:bg-red-500/30 text-white border border-red-300/30 shadow-lg"
                           onClick={(e) => {
                             e.stopPropagation()
                             handleDeleteMember(member._id)
@@ -941,8 +941,8 @@ function TeamPage() {
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
-                      <div className="flex flex-col items-center">
-                        <p className="font-bold text-xl sm:text-2xl lg:text-3xl text-center break-words px-2 text-white drop-shadow-lg">
+                      <div className="flex flex-1 flex-col items-center justify-center space-y-3 px-2 pb-2">
+                        <p className="font-bold text-xl sm:text-2xl lg:text-3xl text-center break-words leading-tight text-white drop-shadow-lg">
                           {member.name}
                         </p>
                         {member._id === currentMemberId && (
