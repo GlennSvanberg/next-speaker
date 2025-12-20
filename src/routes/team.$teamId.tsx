@@ -819,7 +819,7 @@ function TeamPage() {
                   title={`Click to notify ${member.name}`}
                 >
                   <CardContent 
-                    className="pt-6 pb-6 px-6 flex-1 flex flex-col justify-center relative group/card"
+                    className="pt-4 pb-5 px-4 sm:pt-6 sm:pb-6 sm:px-6 flex-1 flex flex-col justify-center relative group/card"
                     style={{
                       background: `
                         radial-gradient(ellipse at top left, rgba(255, 255, 255, 0.2) 0%, transparent 60%),
@@ -896,7 +896,7 @@ function TeamPage() {
                     )}
                     <div className="flex h-full flex-col relative z-10">
                       {/* Action buttons (share/edit/delete) - keep in normal flow so they never cover the name */}
-                      <div className="flex w-full justify-end gap-1 sm:gap-2 p-2">
+                      <div className="flex w-full justify-end gap-1 sm:gap-2 p-1 sm:p-2">
                         <Button
                           variant="ghost"
                           size="icon"
