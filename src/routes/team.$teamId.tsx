@@ -676,7 +676,12 @@ function TeamPage() {
                 </div>
               </div>
               <DialogFooter>
-                <Button type="submit" disabled={isJoining || !joinMemberName.trim() || !joinMemberColor} className="w-full">
+                <Button 
+                  type="submit" 
+                  disabled={isJoining || !joinMemberName.trim() || !joinMemberColor} 
+                  className="w-full"
+                  trackaton-on-click="team-join-submit"
+                >
                   {isJoining ? 'Joining...' : 'Join Team'}
                 </Button>
               </DialogFooter>
@@ -760,6 +765,7 @@ function TeamPage() {
                 className="hover:bg-muted/50 transition-all rounded-lg flex-shrink-0 p-2"
                 aria-label="Copy team link"
                 title="Copy team link"
+                trackaton-on-click="team-share-link"
               >
                 <Share2 className="h-6 w-6 sm:h-8 sm:w-8 lg:h-10 lg:w-10" />
               </Button>
@@ -774,6 +780,7 @@ function TeamPage() {
               onClick={() => setShowHelpDialog(true)}
               className="min-h-[44px] min-w-[44px] hover:bg-muted/50 transition-all rounded-full border-0 p-0"
               aria-label="Help"
+              trackaton-on-click="team-help-dialog"
             >
               <HelpCircle className="h-5 w-5" />
             </Button>
@@ -817,6 +824,7 @@ function TeamPage() {
                   tabIndex={0}
                   aria-label={`Notify ${member.name}`}
                   title={`Click to notify ${member.name}`}
+                  trackaton-on-click="team-notify-member"
                 >
                   <CardContent 
                     className="pt-6 pb-6 px-6 flex-1 flex flex-col justify-center relative group/card"
@@ -907,6 +915,7 @@ function TeamPage() {
                           }}
                           aria-label={`Copy ping URL for ${member.name}`}
                           title={`Copy ping URL for ${member.name}`}
+                          trackaton-on-click="team-copy-ping-url"
                         >
                           {copiedPingUrlMemberId === member._id ? (
                             <Check className="h-4 w-4" />
@@ -924,6 +933,7 @@ function TeamPage() {
                           }}
                           aria-label={`Edit ${member.name}`}
                           title={`Edit ${member.name}`}
+                          trackaton-on-click="team-edit-member"
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
@@ -937,6 +947,7 @@ function TeamPage() {
                           }}
                           aria-label={`Delete ${member.name}`}
                           title={`Delete ${member.name}`}
+                          trackaton-on-click="team-delete-member"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

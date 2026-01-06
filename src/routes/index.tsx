@@ -117,6 +117,7 @@ function TeamCard({
         }
       }}
       aria-label={`Open team ${team?.name || teamId}`}
+      trackaton-on-click="hero-view-team"
     >
       {adminMode && onDeleteTeam && (
         <button
@@ -124,6 +125,7 @@ function TeamCard({
           onClick={handleDeleteTeam}
           aria-label={`Delete team ${team.name}`}
           title="Delete team"
+          trackaton-on-click="admin-delete-team"
         >
           <Trash2 className="h-4 w-4" />
         </button>
@@ -151,6 +153,7 @@ function TeamCard({
                       onClick={(e) => handleDeleteMember(e, member._id, member.name)}
                       aria-label={`Delete member ${member.name}`}
                       title="Delete member"
+                      trackaton-on-click="admin-delete-member"
                       style={{ 
                         pointerEvents: 'auto'
                       }}
@@ -387,6 +390,7 @@ function Home() {
               localStorage.removeItem('adminMode')
             }}
             className="shadow-lg hover:shadow-xl transition-all"
+            trackaton-on-click="admin-deactivate-superpowers"
           >
             <X className="h-4 w-4 mr-2" />
             Deactivate Superpowers
@@ -463,6 +467,7 @@ function Home() {
                   }, 500)
                 }}
                 className="text-lg px-8 py-6 h-auto shadow-xl hover:shadow-2xl transition-all"
+                trackaton-on-click="hero-scroll-to-create"
               >
                 Create Your Team Now
                 <ArrowRight className="ml-2 h-5 w-5" />
@@ -473,6 +478,7 @@ function Home() {
                     variant="outline"
                     size="lg"
                     className="text-lg px-8 py-6 h-auto"
+                    trackaton-on-click="hero-how-it-works"
                   >
                     <Info className="mr-2 h-5 w-5" />
                     How It Works
@@ -555,7 +561,7 @@ function Home() {
             </p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <Card className="border-2 hover:border-primary/50 transition-all hover:shadow-lg bg-card/80 backdrop-blur-sm cursor-pointer">
+            <Card className="border-2 hover:border-primary/50 transition-all hover:shadow-lg bg-card/80 backdrop-blur-sm cursor-pointer" trackaton-on-click="feature-card-lightning-fast">
               <CardHeader>
                 <div className="p-3 rounded-lg bg-blue-500/10 w-fit mb-4">
                   <Zap className="h-6 w-6 text-blue-500" />
@@ -566,7 +572,7 @@ function Home() {
                 </CardDescription>
               </CardHeader>
             </Card>
-            <Card className="border-2 hover:border-primary/50 transition-all hover:shadow-lg bg-card/80 backdrop-blur-sm cursor-pointer">
+            <Card className="border-2 hover:border-primary/50 transition-all hover:shadow-lg bg-card/80 backdrop-blur-sm cursor-pointer" trackaton-on-click="feature-card-zero-setup">
               <CardHeader>
                 <div className="p-3 rounded-lg bg-green-500/10 w-fit mb-4">
                   <Users className="h-6 w-6 text-green-500" />
@@ -577,7 +583,7 @@ function Home() {
                 </CardDescription>
               </CardHeader>
             </Card>
-            <Card className="border-2 hover:border-primary/50 transition-all hover:shadow-lg bg-card/80 backdrop-blur-sm cursor-pointer">
+            <Card className="border-2 hover:border-primary/50 transition-all hover:shadow-lg bg-card/80 backdrop-blur-sm cursor-pointer" trackaton-on-click="feature-card-real-time-sync">
               <CardHeader>
                 <div className="p-3 rounded-lg bg-purple-500/10 w-fit mb-4">
                   <Bell className="h-6 w-6 text-purple-500" />
@@ -686,6 +692,7 @@ function Home() {
                       disabled={isCreating} 
                       size="lg"
                       className="min-h-[52px] text-base font-semibold shadow-lg hover:shadow-xl transition-all px-8"
+                      trackaton-on-click="create-team-submit"
                     >
                       {isCreating ? 'Creating...' : 'Create Team Now'}
                       <ArrowRight className="ml-2 h-5 w-5" />

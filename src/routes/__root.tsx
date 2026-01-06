@@ -76,6 +76,14 @@ export const Route = createRootRouteWithContext<{
       { rel: 'manifest', href: '/site.webmanifest' },
       { rel: 'icon', href: '/favicon.ico' },
     ],
+    scripts: [
+      {
+        src: 'https://www.trackaton.com/track.js',
+        'data-website-id': 'jd71gr8v39k352m9s3rcbax3xx7ypbj9',
+        'data-endpoint': 'https://resolute-orca-949.convex.site/api/e',
+        async: true,
+      },
+    ],
   }),
   notFoundComponent: () => <div>Route not found</div>,
   component: RootComponent,
