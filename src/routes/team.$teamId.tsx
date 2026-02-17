@@ -124,7 +124,6 @@ function TeamPage() {
   const [joinMemberName, setJoinMemberName] = useState('')
   const [joinMemberColor, setJoinMemberColor] = useState<string | null>(null)
   const [isJoining, setIsJoining] = useState(false)
-  const [copiedPingUrlMemberId, setCopiedPingUrlMemberId] = useState<Id<'members'> | null>(null)
   const [showHelpDialog, setShowHelpDialog] = useState(false)
   const [notifiedMembers, setNotifiedMembers] = useState<Set<Id<'members'>>>(new Set())
   const [confirmDialog, setConfirmDialog] = useState<{
@@ -427,37 +426,6 @@ function TeamPage() {
       }, 3000)
     }
   }
-
-
-
-  const copyPingUrl = (toMemberId: Id<'members'>) => {
-    if (!currentMemberId) {
-      setToastMessage('You must be a member to generate ping URLs')
-      setTimeout(() => {
-        setToastMessage(null)
-      }, 3000)
-      return
-    }
-
-    // Use the app's base URL instead of Convex URL
-    const pingUrl = `${window.location.origin}/api/ping?teamId=${encodeURIComponent(teamId)}&toMemberId=${encodeURIComponent(toMemberId)}&fromMemberId=${encodeURIComponent(currentMemberId)}`
-    
-    navigator.clipboard.writeText(pingUrl).then(() => {
-      setCopiedPingUrlMemberId(toMemberId)
-      setToastMessage('Ping URL copied to clipboard!')
-      setTimeout(() => {
-        setCopiedPingUrlMemberId(null)
-        setToastMessage(null)
-      }, 2000)
-    }).catch((err) => {
-      console.error('Failed to copy ping URL:', err)
-      setToastMessage('Failed to copy ping URL')
-      setTimeout(() => {
-        setToastMessage(null)
-      }, 3000)
-    })
-  }
-
   const copyTeamLink = () => {
     const teamLink = `${window.location.origin}/team/${teamId}`
     
@@ -903,26 +871,8 @@ function TeamPage() {
                       </div>
                     )}
                     <div className="flex h-full flex-col relative z-10">
-                      {/* Action buttons (share/edit/delete) - keep in normal flow so they never cover the name */}
+                      {/* Action buttons (edit/delete) - keep in normal flow so they never cover the name */}
                       <div className="flex w-full justify-end gap-1 sm:gap-2 p-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-9 w-9 min-h-[36px] min-w-[36px] sm:h-10 sm:w-10 sm:min-h-[44px] sm:min-w-[44px] bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white border border-white/30 shadow-lg"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            copyPingUrl(member._id)
-                          }}
-                          aria-label={`Copy ping URL for ${member.name}`}
-                          title={`Copy ping URL for ${member.name}`}
-                          trackaton-on-click="team-copy-ping-url"
-                        >
-                          {copiedPingUrlMemberId === member._id ? (
-                            <Check className="h-4 w-4" />
-                          ) : (
-                            <Share2 className="h-4 w-4" />
-                          )}
-                        </Button>
                         <Button
                           variant="ghost"
                           size="icon"
@@ -1039,24 +989,13 @@ function TeamPage() {
             </div>
             <div className="flex gap-4 p-3 rounded-lg hover:bg-muted/50 transition-colors">
               <div className="flex-shrink-0">
-                <div className="p-2 rounded-lg bg-purple-500/10">
-                  <Share2 className="h-5 w-5 text-purple-500" />
-                </div>
-              </div>
-              <div className="flex-1">
-                <p className="font-semibold text-foreground mb-1">Share ping URLs</p>
-                <p className="text-sm text-muted-foreground">Use the share button on each member's card to copy their ping URL. Share this URL to notify them directly via a link.</p>
-              </div>
-            </div>
-            <div className="flex gap-4 p-3 rounded-lg hover:bg-muted/50 transition-colors">
-              <div className="flex-shrink-0">
                 <div className="p-2 rounded-lg bg-orange-500/10">
                   <Palette className="h-5 w-5 text-orange-500" />
                 </div>
               </div>
               <div className="flex-1">
                 <p className="font-semibold text-foreground mb-1">Edit members</p>
-                <p className="text-sm text-muted-foreground">Use the edit button on each card to rename members or change their colors. The share and edit buttons are always visible on every card.</p>
+                <p className="text-sm text-muted-foreground">Use the edit button on each card to rename members or change their colors. Edit and delete buttons are always visible on every card.</p>
               </div>
             </div>
             <div className="flex gap-4 p-3 rounded-lg hover:bg-muted/50 transition-colors">
